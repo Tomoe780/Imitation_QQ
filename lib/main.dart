@@ -73,7 +73,7 @@ class _LoginPageState extends State<LoginPage> {
               const SizedBox(height: 40),
               // QQ号输入框
               Container(
-                width: MediaQuery.of(context).size.width * 0.8,  // 设置输入框宽度为屏幕宽度的80%
+                width: MediaQuery.of(context).size.width * 0.8,
                 height: 50,  // 设置输入框高度为50
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 decoration: BoxDecoration(
@@ -95,8 +95,8 @@ class _LoginPageState extends State<LoginPage> {
               const SizedBox(height: 20),
               // 密码输入框
               Container(
-                width: MediaQuery.of(context).size.width * 0.8,  // 设置输入框宽度为屏幕宽度的80%
-                height: 50,  // 设置输入框高度为50
+                width: MediaQuery.of(context).size.width * 0.8,
+                height: 50,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 decoration: BoxDecoration(
                   color: Colors.grey[200],
@@ -105,9 +105,9 @@ class _LoginPageState extends State<LoginPage> {
                 child: TextField(
                   controller: passwordController,
                   keyboardType: TextInputType.text,
-                  textAlign: TextAlign.right, // 从右侧输入
-                  maxLines: 1, // 单行输入
-                  obscureText: !isPasswordVisible, // 控制密码显示
+                  textAlign: TextAlign.right,
+                  maxLines: 1,
+                  obscureText: !isPasswordVisible,
                   decoration: InputDecoration(
                     border: InputBorder.none,
                     hintText: '请输入密码',

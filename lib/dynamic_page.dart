@@ -25,21 +25,17 @@ class News {
 
   // 从JSON解析新闻数据
   factory News.fromJson(Map<String, dynamic> json) {
-    // 检查图片 URL 是否以 http 或 https 开头
     String picUrl = json['picUrl'] ?? '';
     if (!picUrl.startsWith('http') && !picUrl.startsWith('https')) {
-      picUrl = ''; // 如果不以 http/https 开头，则设置为空字符串
+      picUrl = 'https://via.placeholder.com/150'; // 使用默认网络图片URL
     }
-    String detailUrl = json['url'] ?? '';
-    if (!detailUrl.startsWith('http') && !detailUrl.startsWith('https')) {
-      detailUrl = 'https://$detailUrl'; // 添加默认协议
-    }
+
     return News(
       id: json['id'] ?? '',
       title: json['title'] ?? '无标题',
       description: json['description'] ?? '',
       source: json['source'] ?? '未知来源',
-      picUrl: json['picUrl'] ?? '',
+      picUrl: picUrl,
       url: json['url'] ?? '',
       ctime: json['ctime'] ?? '',
     );
@@ -55,14 +51,16 @@ class DynamicPage extends StatefulWidget {
 class _DynamicPageState extends State<DynamicPage> {
   int _currentPage = 1;
   late Future<List<News>> _newsList;
+  String _selectedCategory = '国内'; // 新增：默认选择新闻分类
 
   @override
   void initState() {
     super.initState();
-    _newsList = fetchNews(_currentPage);
+    _newsList = fetchNews(_currentPage, _selectedCategory); // 根据分类加载新闻
   }
 
-  Future<List<News>> fetchNews(int page) async {
+  // 根据分类请求新闻数据
+  Future<List<News>> fetchNews(int page, String category) async {
     final url = 'https://api.tianapi.com/generalnews/index?key=b00c8a71e17ce2a3763cda02b56f1eac&page=$page';
     final response = await http.get(Uri.parse(url));
 
@@ -82,14 +80,35 @@ class _DynamicPageState extends State<DynamicPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("综合新闻"),
+        title: const Text("综合新闻"),
         actions: [
+          // 分类选择下拉框
+          DropdownButton<String>(
+            value: _selectedCategory,
+            icon: const Icon(Icons.arrow_drop_down),
+            onChanged: (String? newCategory) {
+              if (newCategory != null) {
+                setState(() {
+                  _selectedCategory = newCategory;
+                  _currentPage = 1; // 切换分类时重置页码
+                  _newsList = fetchNews(_currentPage, _selectedCategory); // 获取新分类的新闻
+                });
+              }
+            },
+            items: ['国内', '国际', '科技', '体育'].map<DropdownMenuItem<String>>((String category) {
+              return DropdownMenuItem<String>(
+                value: category,
+                child: Text(category),
+              );
+            }).toList(),
+          ),
+          // 刷新按钮
           IconButton(
-            icon: Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh),
             onPressed: () {
               setState(() {
                 _currentPage++;
-                _newsList = fetchNews(_currentPage); // 刷新时获取下一页新闻
+                _newsList = fetchNews(_currentPage, _selectedCategory); // 刷新时获取下一页新闻
               });
             },
           ),
@@ -99,18 +118,18 @@ class _DynamicPageState extends State<DynamicPage> {
         onRefresh: () async {
           setState(() {
             _currentPage++;
-            _newsList = fetchNews(_currentPage); // 下拉刷新时获取下一页新闻
+            _newsList = fetchNews(_currentPage, _selectedCategory); // 下拉刷新时获取下一页新闻
           });
         },
         child: FutureBuilder<List<News>>(
           future: _newsList,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(child: CircularProgressIndicator());
+              return const Center(child: CircularProgressIndicator());
             } else if (snapshot.hasError) {
               return Center(child: Text("加载新闻失败: ${snapshot.error}"));
             } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-              return Center(child: Text("暂无新闻"));
+              return const Center(child: Text("暂无新闻"));
             }
 
             List<News> newsList = snapshot.data!;
@@ -126,16 +145,16 @@ class _DynamicPageState extends State<DynamicPage> {
                     height: 60,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) {
-                      return Icon(Icons.broken_image, size: 80);
+                      return const Icon(Icons.broken_image, size: 80);
                     },
                   )
-                      : Icon(Icons.image, size: 80),
+                      : const Icon(Icons.image, size: 80),
                   title: Text(news.title),
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(news.source),
-                      Text(news.ctime, style: TextStyle(color: Colors.grey, fontSize: 12)),
+                      Text(news.ctime, style: const TextStyle(color: Colors.grey, fontSize: 12)),
                     ],
                   ),
                   onTap: () {
@@ -156,25 +175,48 @@ class _DynamicPageState extends State<DynamicPage> {
   }
 }
 
-
 // 新闻详情页
-class NewsDetailPage extends StatelessWidget {
+class NewsDetailPage extends StatefulWidget {
   final String url;
 
-  NewsDetailPage({required this.url});
+  const NewsDetailPage({super.key, required this.url});
+
+  @override
+  _NewsDetailPageState createState() => _NewsDetailPageState();
+}
+
+class _NewsDetailPageState extends State<NewsDetailPage> {
+  bool _isLoading = true; // 用于控制进度条显示
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("新闻详情"),
+        title: const Text("新闻详情"),
       ),
-      body: WebView(
-        initialUrl: url,
-        javascriptMode: JavascriptMode.unrestricted,
-        onWebViewCreated: (WebViewController webViewController) {
-          // 可以在此添加额外的配置
-        },
+      body: Column(
+        children: [
+          if (_isLoading) const LinearProgressIndicator(), // 显示加载进度条
+          Expanded(
+            child: WebView(
+              initialUrl: widget.url,
+              javascriptMode: JavascriptMode.unrestricted,
+              onPageStarted: (url) {
+                setState(() {
+                  _isLoading = true; // 网页开始加载时显示进度条
+                });
+              },
+              onPageFinished: (url) {
+                setState(() {
+                  _isLoading = false; // 网页加载完成时隐藏进度条
+                });
+              },
+              onWebViewCreated: (WebViewController webViewController) {
+                // 可以在此进行WebView配置
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

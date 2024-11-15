@@ -42,7 +42,7 @@ class UserProfilePage extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                '5120223299 钱川',
+                                'Tomoe',
                                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                               ),
                               Text('QQ号：780741725', style: TextStyle(fontSize: 14)),
