@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'change_password_page.dart';
+import 'main.dart';
 import 'user_profile_page.dart';
 import 'chat_page.dart';
 import 'dynamic_page.dart';
 import 'world_page.dart';
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
+  const MyHomePage({super.key, required this.title, required this.nickname});
 
   final String title;
+  final String nickname; // 传递的昵称
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
+
 }
 
 class Friend {
@@ -77,25 +81,47 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
+  void _navigateToChangePasswordPage(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => ChangePasswordPage()),
+    );
+  }
+
+  void _logout(BuildContext context) {
+    // 如果需要清理用户数据，可以在这里添加逻辑
+    // 跳转到登录页面并清空所有页面
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => LoginPage()), // 替换为你的登录页面
+          (route) => false, // 移除导航栈中的所有页面
+    );
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        elevation: 50.0, // 增加阴影效果，使状态栏显得立体
+        elevation: 50.0,
         backgroundColor: Colors.blue,
         leading: GestureDetector(
           onTap: () {
             _showUserProfile(context);
           },
-          child: CircleAvatar(
-            radius: 10,
-            backgroundImage: AssetImage('images/QQ头像.jpg'),
+          child: Padding(
+            padding: const EdgeInsets.all(4.0),
+            child: CircleAvatar(
+              radius: 15,
+              backgroundImage: AssetImage('images/QQ头像.jpg'),
+            ),
           ),
         ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Tomoe', style: TextStyle(fontSize: 18)),
+            // 显示注册时传入的昵称
+            Text(widget.nickname, style: TextStyle(fontSize: 18)),
             Row(
               children: [
                 // 绿色圆点
@@ -113,6 +139,20 @@ class _MyHomePageState extends State<MyHomePage> {
           ],
         ),
         actions: [
+          // 退出按钮
+          IconButton(
+            icon: Icon(Icons.exit_to_app), // 退出图标
+            onPressed: () {
+              _logout(context); // 调用退出逻辑
+            },
+          ),
+          // 修改密码按钮
+          IconButton(
+            icon: Icon(Icons.lock),
+            onPressed: () {
+              _navigateToChangePasswordPage(context);
+            },
+          ),
           IconButton(
             icon: Icon(Icons.add),
             onPressed: () {
@@ -120,7 +160,9 @@ class _MyHomePageState extends State<MyHomePage> {
             },
           ),
         ],
+
       ),
+
       bottomNavigationBar: Container(
         color: Colors.blue,
         child: BottomNavigationBar(
