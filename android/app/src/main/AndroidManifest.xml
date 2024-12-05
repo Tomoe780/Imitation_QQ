@@ -2,9 +2,11 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <application
         android:usesCleartextTraffic="true"
-        android:label="Imitation_QQ"
+        android:label="Imitation_QQ">   <!-- 软件名称-->
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        android:versionCode="12"        <!-- 版本号 -->
+        android:versionName="114.5.14">   <!-- 版本名称 -->
         <activity
             android:name=".MainActivity"
             android:exported="true"

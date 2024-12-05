@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:webview_flutter/webview_flutter.dart';
 import 'dart:convert';
-import 'database_helper.dart';
-import 'download_image.dart';
 
 // 新闻数据模型
 class News {
@@ -25,7 +23,7 @@ class News {
     required this.ctime,
   });
 
-  // copyWith 方法，允许更新某些字段
+
   News copyWith({
     String? id,
     String? title,
@@ -40,7 +38,7 @@ class News {
       title: title ?? this.title,
       description: description ?? this.description,
       source: source ?? this.source,
-      picUrl: picUrl ?? this.picUrl, // 如果传入新的 picUrl，使用它；否则使用原值
+      picUrl: picUrl ?? this.picUrl,
       url: url ?? this.url,
       ctime: ctime ?? this.ctime,
     );
@@ -77,6 +75,19 @@ class News {
   }
 }
 
+// 根据分类请求新闻数据
+Future<List<News>> fetchNews(int page, String category) async {
+  final url = 'http://api.tianapi.com/generalnews/index?key=b00c8a71e17ce2a3763cda02b56f1eac&page=$page&';
+    final response = await http.get(Uri.parse(url));
+    final data = json.decode(response.body);
+    // 解析新闻列表
+    final newsList = (data['newslist'] as List).map((item) {
+      return News.fromJson(item); // 直接将数据转换为 News 对象
+    }).toList();
+    return newsList;
+}
+
+
 // 动态页面类
 class DynamicPage extends StatefulWidget {
   @override
@@ -94,43 +105,7 @@ class _DynamicPageState extends State<DynamicPage> {
     _newsList = fetchNews(_currentPage, _selectedCategory); // 根据分类加载新闻
   }
 
-  // 根据分类请求新闻数据
-  Future<List<News>> fetchNews(int page, String category) async {
-    final url = 'https://api.tianapi.com/generalnews/index?key=你的API密钥&page=$page&';
-    try {
-      final response = await http.get(Uri.parse(url));
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (data['code'] == 200 && data['newslist'] != null) {
-          final newsList = (data['newslist'] as List).map((item) async {
-            final news = News.fromJson(item);
 
-            // 下载图片并获取本地路径
-            if (news.picUrl.isNotEmpty) {
-              final localPicPath = await downloadImage(news.picUrl);
-              // 将本地路径保存到数据库
-              return news.copyWith(picUrl: localPicPath ?? news.picUrl); // 如果下载失败，保留原 URL
-            } else {
-              return news;
-            }
-          }).toList();
-
-          // 等待所有图片下载完成后再保存
-          final resolvedNewsList = await Future.wait(newsList);
-
-          await DatabaseHelper().insertNews(resolvedNewsList);
-          return resolvedNewsList;
-        } else {
-          throw Exception('API返回数据格式错误');
-        }
-      } else {
-        throw Exception('无法加载新闻数据');
-      }
-    } catch (e) {
-      print('网络请求失败，尝试从本地加载：$e');
-      return await DatabaseHelper().fetchNews();
-    }
-  }
 
 
   @override

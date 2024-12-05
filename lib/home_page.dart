@@ -106,6 +106,7 @@ class _MyHomePageState extends State<MyHomePage> {
         elevation: 50.0,
         backgroundColor: Colors.blue,
         leading: GestureDetector(
+          key: Key('loginButton'),
           onTap: () {
             _showUserProfile(context);
           },
